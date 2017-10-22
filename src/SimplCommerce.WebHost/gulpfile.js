@@ -46,7 +46,8 @@ var bower = {
     "matchheight": "matchheight/dist/*.js",
     "toastr": "toastr/toastr*.{js,css}",
     "bootbox": "bootbox/bootbox*.{js,css}",
-    "angular-ui-tree": "angular-ui-tree/dist/*.*"
+    "angular-ui-tree": "angular-ui-tree/dist/*.*",
+    "angular-bootstrap-colorpicker": "angular-bootstrap-colorpicker/{js,css,img}/*.*"
 };
 
 gulp.task('clean-module', function () {
@@ -84,7 +85,7 @@ function loadModules() {
     var moduleManifestPaths,
         modules = [];
 
-    moduleManifestPaths = glob.sync(mPaths.devModules + 'SimplCommerce.Module.*/module.json', {});
+    moduleManifestPaths = glob.sync(mPaths.devModules + '*.*/module.json', {});
     moduleManifestPaths.forEach(function (moduleManifestPath) {
         var moduleManifest = require(moduleManifestPath);
         modules.push(moduleManifest);

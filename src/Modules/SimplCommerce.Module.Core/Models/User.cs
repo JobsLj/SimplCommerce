@@ -5,7 +5,7 @@ using SimplCommerce.Infrastructure.Models;
 
 namespace SimplCommerce.Module.Core.Models
 {
-    public class User : IdentityUser<long, IdentityUserClaim<long>, UserRole, IdentityUserLogin<long>, IdentityUserToken<long>>, IEntityWithTypedId<long>
+    public class User : IdentityUser<long>, IEntityWithTypedId<long>
     {
         public User()
         {
@@ -36,5 +36,7 @@ namespace SimplCommerce.Module.Core.Models
         public long? DefaultBillingAddressId { get; set; }
 
         public IList<UserRole> Roles { get; set; } =  new List<UserRole>();
+
+        public IList<UserCustomerGroup> CustomerGroups { get; set; } = new List<UserCustomerGroup>();
     }
 }

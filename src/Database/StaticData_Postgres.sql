@@ -2,13 +2,18 @@
 INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (2, 'Global.AssetVersion', '1.0');
 INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (3, 'News.PageSize', '10');
 INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (4, 'GoogleAppKey', 'AIzaSyBmsQV2FUo6g52R1kovLyfvaYm4FryNs4g');
-SELECT pg_catalog.setval('"Core_AppSetting_Id_seq"', 4, true);
+INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (5, 'SmtpServer', 'smtp.gmail.com');
+INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (6, 'SmtpPort', '587');
+INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (7, 'SmtpUsername', '');
+INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (8, 'SmtpPassword', '');
+INSERT INTO "Core_AppSetting" ("Id", "Key", "Value") VALUES (9, 'Theme', 'Generic');
+SELECT pg_catalog.setval('"Core_AppSetting_Id_seq"', 9, true);
 
 INSERT INTO "Core_Role" ("Id", "ConcurrencyStamp", "Name", "NormalizedName") VALUES (1, 'bd3bee0b-5f1d-482d-b890-ffdc01915da3', 'admin', 'ADMIN');
 INSERT INTO "Core_Role" ("Id", "ConcurrencyStamp", "Name", "NormalizedName") VALUES (2, 'bd3bee0b-5f1d-482d-b890-ffdc01915da3', 'customer', 'CUSTOMER');
 INSERT INTO "Core_Role" ("Id", "ConcurrencyStamp", "Name", "NormalizedName") VALUES (3, 'bd3bee0b-5f1d-482d-b890-ffdc01915da3', 'guest', 'GUEST');
 INSERT INTO "Core_Role" ("Id", "ConcurrencyStamp", "Name", "NormalizedName") VALUES (4, 'bd3bee0b-5f1d-482d-b890-ffdc01915da3', 'vendor', 'VENDOR');
-SELECT pg_catalog.setval('"Core_Role_Id_seq"', 3, true);
+SELECT pg_catalog.setval('"Core_Role_Id_seq"', 4, true);
 
 INSERT INTO "Core_User" ("Id", "UserGuid", "AccessFailedCount", "ConcurrencyStamp", "CreatedOn", "Email", "EmailConfirmed", "FullName", "IsDeleted", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UpdatedOn", "UserName") VALUES (1, '1FFF10CE-0231-43A2-8B7D-C8DB18504F65', 0, '8620916f-e6b6-4f12-9041-83737154b338', '2016-05-20 16:50:05.707655', 'admin@simplcommerce.com', false, 'Shop Admin', false, true, NULL, 'ADMIN@SIMPLCOMMERCE.COM', 'ADMIN@SIMPLCOMMERCE.COM', 'AQAAAAEAACcQAAAAEAEqSCV8Bpg69irmeg8N86U503jGEAYf75fBuzvL00/mr/FGEsiUqfR0rWBbBUwqtw==', NULL, false, '9e87ce89-64c0-45b9-8b52-6e0eaa79e5b7', false, '2016-05-20 16:50:05.707655', 'admin@simplcommerce.com');
 SELECT pg_catalog.setval('"Core_User_Id_seq"', 1, true);
@@ -290,6 +295,7 @@ INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (1, 'Ed
 INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (1, 'Create Address', 'Tạo địa chỉ mới');
 INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (1, 'Your account', 'Tài khoản của bạn');
 INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (1, 'Date', 'Ngày');
+INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (1, 'Customer Groups', 'Nhóm khách hàng');
 
 INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (2, 'Register', 'S''inscrire');
 INSERT INTO "Localization_Resource" ("CultureId", "Key", "Value") VALUES (2, 'Hello {0}!', 'Bonjour {0}!');

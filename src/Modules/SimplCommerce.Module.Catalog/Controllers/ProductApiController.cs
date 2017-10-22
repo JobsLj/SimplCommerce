@@ -76,6 +76,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             {
                 Id = product.Id,
                 Name = product.Name,
+                Slug = product.SeoTitle,
                 ShortDescription = product.ShortDescription,
                 Description = product.Description,
                 Specification = product.Specification,
@@ -119,7 +120,8 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 {
                     Id = x.OptionId,
                     Name = x.Option.Name,
-                    Values = JsonConvert.DeserializeObject<IList<string>>(x.Value)
+                    DisplayType = x.DisplayType,
+                    Values = JsonConvert.DeserializeObject<IList<ProductOptionValueVm>>(x.Value)
                 }).ToList();
 
             foreach (var variation in product.ProductLinks.Where(x => x.LinkType == ProductLinkType.Super).Select(x => x.LinkedProduct).Where(x => !x.IsDeleted).OrderBy(x => x.Id))
@@ -258,7 +260,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             var product = new Product
             {
                 Name = model.Product.Name,
-                SeoTitle = model.Product.Name.ToUrlFriendly(),
+                SeoTitle = model.Product.Slug,
                 ShortDescription = model.Product.ShortDescription,
                 Description = model.Product.Description,
                 Specification = model.Product.Specification,
@@ -297,6 +299,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 product.AddOptionValue(new ProductOptionValue
                 {
                     OptionId = option.Id,
+                    DisplayType = option.DisplayType,
                     Value = JsonConvert.SerializeObject(option.Values),
                     SortIndex = optionIndex
                 });
@@ -358,7 +361,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             }
 
             product.Name = model.Product.Name;
-            product.SeoTitle = product.Name.ToUrlFriendly();
+            product.SeoTitle = model.Product.Slug;
             product.ShortDescription = model.Product.ShortDescription;
             product.Description = model.Product.Description;
             product.Specification = model.Product.Specification;
@@ -439,7 +442,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 return new BadRequestObjectResult(new { error = "You don't have permission to manage this product" });
             }
 
-            _productService.Delete(product);
+            await _productService.Delete(product);
 
             return Ok();
         }
@@ -545,6 +548,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
                     product.AddOptionValue(new ProductOptionValue
                     {
                         OptionId = optionVm.Id,
+                        DisplayType = optionVm.DisplayType,
                         Value = JsonConvert.SerializeObject(optionVm.Values),
                         SortIndex = optionIndex
                     });
@@ -552,6 +556,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 else
                 {
                     optionValue.Value = JsonConvert.SerializeObject(optionVm.Values);
+                    optionValue.DisplayType = optionVm.DisplayType;
                     optionValue.SortIndex = optionIndex;
                 }
 

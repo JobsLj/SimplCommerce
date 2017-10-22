@@ -17,7 +17,7 @@ namespace SimplCommerce.WebHost.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.0.0-preview2-25794")
+                .HasAnnotation("ProductVersion", "2.0.0-rtm-26452")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -411,6 +411,8 @@ namespace SimplCommerce.WebHost.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<string>("DisplayType");
+
                     b.Property<long>("OptionId");
 
                     b.Property<long>("ProductId");
@@ -634,6 +636,32 @@ namespace SimplCommerce.WebHost.Migrations
                     b.ToTable("Core_Country");
                 });
 
+            modelBuilder.Entity("SimplCommerce.Module.Core.Models.CustomerGroup", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTimeOffset>("CreatedOn");
+
+                    b.Property<string>("Description");
+
+                    b.Property<bool>("IsActive");
+
+                    b.Property<bool>("IsDeleted");
+
+                    b.Property<string>("Name");
+
+                    b.Property<DateTimeOffset>("UpdatedOn");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("[Name] IS NOT NULL");
+
+                    b.ToTable("Core_CustomerGroup");
+                });
+
             modelBuilder.Entity("SimplCommerce.Module.Core.Models.District", b =>
                 {
                     b.Property<long>("Id")
@@ -845,6 +873,24 @@ namespace SimplCommerce.WebHost.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Core_UserAddress");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Core.Models.UserCustomerGroup", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<long>("CustomerGroupId");
+
+                    b.Property<long>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerGroupId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Core_UserCustomerGroup");
                 });
 
             modelBuilder.Entity("SimplCommerce.Module.Core.Models.UserRole", b =>
@@ -1070,10 +1116,36 @@ namespace SimplCommerce.WebHost.Migrations
                     b.ToTable("News_NewsItemCategory");
                 });
 
+            modelBuilder.Entity("SimplCommerce.Module.Orders.Models.Cart", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("CouponCode");
+
+                    b.Property<string>("CouponRuleName");
+
+                    b.Property<DateTimeOffset>("CreatedOn");
+
+                    b.Property<bool>("IsActive");
+
+                    b.Property<DateTimeOffset?>("UpdatedOn");
+
+                    b.Property<long>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Orders_Cart");
+                });
+
             modelBuilder.Entity("SimplCommerce.Module.Orders.Models.CartItem", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<long>("CartId");
 
                     b.Property<DateTimeOffset>("CreatedOn");
 
@@ -1081,13 +1153,11 @@ namespace SimplCommerce.WebHost.Migrations
 
                     b.Property<int>("Quantity");
 
-                    b.Property<long>("UserId");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("CartId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Orders_CartItem");
                 });
@@ -1099,9 +1169,15 @@ namespace SimplCommerce.WebHost.Migrations
 
                     b.Property<long>("BillingAddressId");
 
+                    b.Property<string>("CouponCode");
+
+                    b.Property<string>("CouponRuleName");
+
                     b.Property<long>("CreatedById");
 
                     b.Property<DateTimeOffset>("CreatedOn");
+
+                    b.Property<decimal>("Discount");
 
                     b.Property<int>("OrderStatus");
 
@@ -1110,6 +1186,8 @@ namespace SimplCommerce.WebHost.Migrations
                     b.Property<long>("ShippingAddressId");
 
                     b.Property<decimal>("SubTotal");
+
+                    b.Property<decimal>("SubTotalWithDiscount");
 
                     b.Property<DateTimeOffset?>("UpdatedOn");
 
@@ -1178,6 +1256,178 @@ namespace SimplCommerce.WebHost.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("Orders_OrderItem");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRule", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Description");
+
+                    b.Property<decimal>("DiscountAmount");
+
+                    b.Property<int?>("DiscountStep");
+
+                    b.Property<DateTimeOffset?>("EndOn");
+
+                    b.Property<bool>("IsActive");
+
+                    b.Property<bool>("IsCouponRequired");
+
+                    b.Property<decimal?>("MaxDiscountAmount");
+
+                    b.Property<string>("Name");
+
+                    b.Property<string>("RuleToApply");
+
+                    b.Property<DateTimeOffset?>("StartOn");
+
+                    b.Property<int?>("UsageLimitPerCoupon");
+
+                    b.Property<int?>("UsageLimitPerCustomer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Pricing_CartRule");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleCategory", b =>
+                {
+                    b.Property<long>("CartRuleId");
+
+                    b.Property<long>("CategoryId");
+
+                    b.HasKey("CartRuleId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Pricing_CartRuleCategory");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleCustomerGroup", b =>
+                {
+                    b.Property<long>("CartRuleId");
+
+                    b.Property<long>("CustomerGroupId");
+
+                    b.HasKey("CartRuleId", "CustomerGroupId");
+
+                    b.HasIndex("CustomerGroupId");
+
+                    b.ToTable("Pricing_CartRuleCustomerGroup");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleProduct", b =>
+                {
+                    b.Property<long>("CartRuleId");
+
+                    b.Property<long>("ProductId");
+
+                    b.HasKey("CartRuleId", "ProductId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Pricing_CartRuleProduct");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleUsage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<long>("CartRuleId");
+
+                    b.Property<long>("OrderId");
+
+                    b.Property<DateTimeOffset>("UsedOn");
+
+                    b.Property<long>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartRuleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Pricing_CartRuleUsage");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CatalogRule", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Description");
+
+                    b.Property<decimal>("DiscountAmount");
+
+                    b.Property<DateTimeOffset?>("EndOn");
+
+                    b.Property<bool>("IsActive");
+
+                    b.Property<decimal?>("MaxDiscountAmount");
+
+                    b.Property<string>("Name");
+
+                    b.Property<string>("RuleToApply");
+
+                    b.Property<DateTimeOffset?>("StartOn");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Pricing_CatalogRule");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CatalogRuleCustomerGroup", b =>
+                {
+                    b.Property<long>("CatalogRuleId");
+
+                    b.Property<long>("CustomerGroupId");
+
+                    b.HasKey("CatalogRuleId", "CustomerGroupId");
+
+                    b.HasIndex("CustomerGroupId");
+
+                    b.ToTable("Pricing_CatalogRuleCustomerGroup");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.Coupon", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<long>("CartRuleId");
+
+                    b.Property<string>("Code");
+
+                    b.Property<DateTimeOffset>("CreatedOn");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartRuleId");
+
+                    b.ToTable("Pricing_Coupon");
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CouponUsage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<long>("CouponId");
+
+                    b.Property<DateTimeOffset>("UsedOn");
+
+                    b.Property<long>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Pricing_CouponUsage");
                 });
 
             modelBuilder.Entity("SimplCommerce.Module.ProductComparison.Models.ComparingProduct", b =>
@@ -1538,6 +1788,19 @@ namespace SimplCommerce.WebHost.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("SimplCommerce.Module.Core.Models.UserCustomerGroup", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Core.Models.CustomerGroup", "CustomerGroup")
+                        .WithMany("Users")
+                        .HasForeignKey("CustomerGroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Core.Models.User", "User")
+                        .WithMany("CustomerGroups")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("SimplCommerce.Module.Core.Models.UserRole", b =>
                 {
                     b.HasOne("SimplCommerce.Module.Core.Models.Role", "Role")
@@ -1600,16 +1863,24 @@ namespace SimplCommerce.WebHost.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("SimplCommerce.Module.Orders.Models.CartItem", b =>
+            modelBuilder.Entity("SimplCommerce.Module.Orders.Models.Cart", b =>
                 {
-                    b.HasOne("SimplCommerce.Module.Catalog.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("SimplCommerce.Module.Core.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Orders.Models.CartItem", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Orders.Models.Cart", "Cart")
+                        .WithMany("Items")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Catalog.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
@@ -1662,6 +1933,92 @@ namespace SimplCommerce.WebHost.Migrations
                     b.HasOne("SimplCommerce.Module.Catalog.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleCategory", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.CartRule", "CartRule")
+                        .WithMany("Categories")
+                        .HasForeignKey("CartRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Catalog.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleCustomerGroup", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.CartRule", "CartRule")
+                        .WithMany("CustomerGroups")
+                        .HasForeignKey("CartRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Core.Models.CustomerGroup", "CustomerGroup")
+                        .WithMany()
+                        .HasForeignKey("CustomerGroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleProduct", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.CartRule", "CartRule")
+                        .WithMany("Products")
+                        .HasForeignKey("CartRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Catalog.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CartRuleUsage", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.CartRule", "CartRule")
+                        .WithMany()
+                        .HasForeignKey("CartRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Core.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CatalogRuleCustomerGroup", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.CatalogRule", "CatalogRule")
+                        .WithMany("CustomerGroups")
+                        .HasForeignKey("CatalogRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Core.Models.CustomerGroup", "CustomerGroup")
+                        .WithMany()
+                        .HasForeignKey("CustomerGroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.Coupon", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.CartRule", "CartRule")
+                        .WithMany("Coupons")
+                        .HasForeignKey("CartRuleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("SimplCommerce.Module.Pricing.Models.CouponUsage", b =>
+                {
+                    b.HasOne("SimplCommerce.Module.Pricing.Models.Coupon", "Coupon")
+                        .WithMany()
+                        .HasForeignKey("CouponId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("SimplCommerce.Module.Core.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
