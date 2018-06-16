@@ -1,10 +1,12 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SimplCommerce.Infrastructure.Data;
 using SimplCommerce.Module.Core.Models;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
 
 namespace SimplCommerce.Module.Core.Controllers
 {
@@ -12,42 +14,43 @@ namespace SimplCommerce.Module.Core.Controllers
     [Route("api/appsettings")]
     public class AppSettingApiController : Controller
     {
-        private readonly IRepository<AppSetting> _appSettingRepository;
+        private readonly IRepositoryWithTypedId<AppSetting, string> _appSettingRepository;
         private readonly IConfigurationRoot _configurationRoot;
 
-        public AppSettingApiController(IRepository<AppSetting> appSettingRepository, IConfiguration configuration)
+        public AppSettingApiController(IRepositoryWithTypedId<AppSetting, string> appSettingRepository, IConfiguration configuration)
         {
             _appSettingRepository = appSettingRepository;
             _configurationRoot = (IConfigurationRoot)configuration;
         }
 
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            var settings = _appSettingRepository.Query().ToList();
+            var settings = await _appSettingRepository.Query().Where(x => x.IsVisibleInCommonSettingPage).ToListAsync();
             return Json(settings);
         }
 
         [HttpPut]
-        public IActionResult Put([FromBody] IList<AppSetting> model)
+        public async Task<IActionResult> Put([FromBody] IList<AppSetting> model)
         {
             if (ModelState.IsValid)
             {
-                var settings = _appSettingRepository.Query().ToList();
+                var settings = await _appSettingRepository.Query().Where(x => x.IsVisibleInCommonSettingPage).ToListAsync();
                 foreach(var item in settings)
                 {
-                    var vm = model.FirstOrDefault(x => x.Key == item.Key);
+                    var vm = model.FirstOrDefault(x => x.Id == item.Id);
                     if (vm != null)
                     {
                         item.Value = vm.Value;
                     }
                 }
 
-                _appSettingRepository.SaveChanges();
+                await _appSettingRepository.SaveChangesAsync();
                 _configurationRoot.Reload();
 
-                return Ok();
+                return Accepted();
             }
-            return new BadRequestObjectResult(ModelState);
+
+            return BadRequest(ModelState);
         }
     }
 }

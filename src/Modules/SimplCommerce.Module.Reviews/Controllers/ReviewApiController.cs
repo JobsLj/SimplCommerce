@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -114,7 +115,7 @@ namespace SimplCommerce.Module.Reviews.Controllers
         }
 
         [HttpPost("change-status/{id}")]
-        public IActionResult ChangeStatus(long id, [FromBody] int statusId)
+        public async Task<IActionResult> ChangeStatus(long id, [FromBody] int statusId)
         {
             var review = _reviewRepository.Query().FirstOrDefault(x => x.Id == id);
             if (review == null)
@@ -142,13 +143,13 @@ namespace SimplCommerce.Module.Reviews.Controllers
                 }
                 else
                 {
-                    var grouped = rattings.GroupBy(x => x.Rating).Select(x => new { Rating = x.Key, Count = x.Count() });
+                    var grouped = rattings.GroupBy(x => x.Rating).Select(x => new { Rating = x.Key, Count = x.Count() }).ToList();
                     reviewSummary.RatingAverage = grouped.Select(x => x.Rating * x.Count).Sum() / (double)reviewSummary.ReviewsCount;
                 }
 
-                _mediator.Publish(reviewSummary);
-                _reviewRepository.SaveChanges();
-                return Ok();
+                await _mediator.Publish(reviewSummary);
+                await _reviewRepository.SaveChangesAsync();
+                return Accepted();
             }
             return BadRequest(new {Error = "unsupported order status"});
         }

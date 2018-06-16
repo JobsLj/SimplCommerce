@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using SimplCommerce.Infrastructure.Data;
 using SimplCommerce.Module.Catalog.Models;
 using SimplCommerce.Module.Catalog.ViewModels;
@@ -10,7 +11,7 @@ namespace SimplCommerce.Module.Catalog.Services
 {
     public class CategoryService : ICategoryService
     {
-        private const long CategoryEntityTypeId = 1;
+        private const string CategoryEntityTypeId = "Category";
 
         private readonly IRepository<Category> _categoryRepository;
         private readonly IEntityService _entityService;
@@ -21,9 +22,9 @@ namespace SimplCommerce.Module.Catalog.Services
             _entityService = entityService;
         }
 
-        public IList<CategoryListItem> GetAll()
+        public async Task<IList<CategoryListItem>> GetAll()
         {
-            var categories = _categoryRepository.Query().Where(x => !x.IsDeleted).ToList();
+            var categories = await _categoryRepository.Query().Where(x => !x.IsDeleted).ToListAsync();
             var categoriesList = new List<CategoryListItem>();
             foreach (var category in categories)
             {
@@ -50,32 +51,32 @@ namespace SimplCommerce.Module.Catalog.Services
             return categoriesList.OrderBy(x => x.Name).ToList();
         }
 
-        public void Create(Category category)
+        public async Task Create(Category category)
         {
             using (var transaction = _categoryRepository.BeginTransaction())
             {
-                category.SeoTitle = _entityService.ToSafeSlug(category.SeoTitle, category.Id, CategoryEntityTypeId);
+                category.Slug = _entityService.ToSafeSlug(category.Slug, category.Id, CategoryEntityTypeId);
                 _categoryRepository.Add(category);
-                _categoryRepository.SaveChanges();
+                await _categoryRepository.SaveChangesAsync();
 
-                _entityService.Add(category.Name, category.SeoTitle, category.Id, CategoryEntityTypeId);
-                _categoryRepository.SaveChanges();
+                _entityService.Add(category.Name, category.Slug, category.Id, CategoryEntityTypeId);
+                await _categoryRepository.SaveChangesAsync();
 
                 transaction.Commit();
             }
         }
 
-        public void Update(Category category)
+        public async Task Update(Category category)
         {
-            category.SeoTitle = _entityService.ToSafeSlug(category.SeoTitle, category.Id, CategoryEntityTypeId);
-            _entityService.Update(category.Name, category.SeoTitle, category.Id, CategoryEntityTypeId);
-            _categoryRepository.SaveChanges();
+            category.Slug = _entityService.ToSafeSlug(category.Slug, category.Id, CategoryEntityTypeId);
+            _entityService.Update(category.Name, category.Slug, category.Id, CategoryEntityTypeId);
+            await _categoryRepository.SaveChangesAsync();
         }
 
         public async Task Delete(Category category)
         {
-             await _entityService.Remove(category.Id, CategoryEntityTypeId);
-            _categoryRepository.Remove(category);
+            await _entityService.Remove(category.Id, CategoryEntityTypeId);
+            category.IsDeleted = true;
             _categoryRepository.SaveChanges();
         }
     }

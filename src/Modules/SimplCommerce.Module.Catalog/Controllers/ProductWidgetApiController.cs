@@ -14,12 +14,10 @@ namespace SimplCommerce.Module.Catalog.Controllers
     public class ProductWidgetApiController : Controller
     {
         private readonly IRepository<WidgetInstance> _widgetInstanceRepository;
-        private readonly IRepository<Widget> _widgetRespository;
 
-        public ProductWidgetApiController(IRepository<WidgetInstance> widgetInstanceRepository, IRepository<Widget> widgetRepository)
+        public ProductWidgetApiController(IRepository<WidgetInstance> widgetInstanceRepository)
         {
             _widgetInstanceRepository = widgetInstanceRepository;
-            _widgetRespository = widgetRepository;
         }
 
         [HttpGet("{id}")]
@@ -33,11 +31,11 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 WidgetZoneId = widgetInstance.WidgetZoneId,
                 PublishStart = widgetInstance.PublishStart,
                 PublishEnd = widgetInstance.PublishEnd,
+                DisplayOrder = widgetInstance.DisplayOrder,
                 Setting = JsonConvert.DeserializeObject<ProductWidgetSetting>(widgetInstance.Data)
             };
 
             var enumMetaData = MetadataProvider.GetMetadataForType(typeof(ProductWidgetOrderBy));
-
             return Json(model);
         }
 
@@ -49,18 +47,20 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 var widgetInstance = new WidgetInstance
                 {
                     Name = model.Name,
-                    WidgetId = 3,
+                    WidgetId = "ProductWidget",
                     WidgetZoneId = model.WidgetZoneId,
                     PublishStart = model.PublishStart,
                     PublishEnd = model.PublishEnd,
+                    DisplayOrder = model.DisplayOrder,
                     Data = JsonConvert.SerializeObject(model.Setting)
                 };
 
                 _widgetInstanceRepository.Add(widgetInstance);
                 _widgetInstanceRepository.SaveChanges();
-                return Ok();
+                return CreatedAtAction(nameof(Get), new { id = widgetInstance.Id }, null);
             }
-            return new BadRequestObjectResult(ModelState);
+
+            return BadRequest(ModelState);
         }
 
         [HttpPut("{id}")]
@@ -73,13 +73,14 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 widgetInstance.WidgetZoneId = model.WidgetZoneId;
                 widgetInstance.PublishStart = model.PublishStart;
                 widgetInstance.PublishEnd = model.PublishEnd;
+                widgetInstance.DisplayOrder = model.DisplayOrder;
                 widgetInstance.Data = JsonConvert.SerializeObject(model.Setting);
 
                 _widgetInstanceRepository.SaveChanges();
-                return Ok();
+                return Accepted();
             }
 
-            return new BadRequestObjectResult(ModelState);
+            return BadRequest(ModelState);
         }
 
         [HttpGet("available-orderby")]

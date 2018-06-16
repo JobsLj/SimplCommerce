@@ -19,7 +19,7 @@ namespace SimplCommerce.Module.Core.ViewModels
 
         public string AddressLine2 { get; set; }
 
-        public string PostalCode { get; set; }
+        public string ZipCode { get; set; }
 
         public string City { get; set; }
 
@@ -27,12 +27,18 @@ namespace SimplCommerce.Module.Core.ViewModels
 
         public long? DistrictId { get; set; }
 
-        public long CountryId { get; set; }
+        public string CountryId { get; set; }
 
         public IList<SelectListItem> StateOrProvinces { get; set; }
 
         public IList<SelectListItem> Districts { get; set; }
 
         public IList<SelectListItem> Countries { get; set; }
+
+        public bool DisplayDistrict { get; set; } = true;
+
+        public bool DisplayZipCode { get; set; } = true;
+
+        public bool DisplayCity { get; set; } = true;
     }
 }

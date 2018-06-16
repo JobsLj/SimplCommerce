@@ -1,10 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using SimplCommerce.Infrastructure.Models;
 
 namespace SimplCommerce.Module.Core.Models
 {
     public class Address : EntityBase
     {
+        public Address() { }
+
+        public Address(long id)
+        {
+            Id = id;
+        }
+
         public string ContactName { get; set; }
 
         public string Phone { get; set; }
@@ -15,17 +23,19 @@ namespace SimplCommerce.Module.Core.Models
 
         public string City { get; set; }
 
-        public string PostalCode { get; set; }
+        public string ZipCode { get; set; }
 
         public long? DistrictId { get; set; }
 
         public District District { get; set; }
 
+        [Required]
         public long StateOrProvinceId { get; set; }
 
         public StateOrProvince StateOrProvince { get; set; }
 
-        public long CountryId { get; set; }
+        [Required]
+        public string CountryId { get; set; }
 
         public Country Country { get; set; }
 

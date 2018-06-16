@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SimplCommerce.Infrastructure.Data;
 using SimplCommerce.Module.ShoppingCart.Models;
 using SimplCommerce.Module.ShoppingCart.ViewModels;
@@ -16,13 +17,15 @@ namespace SimplCommerce.Module.ShoppingCart.Services
         private readonly IRepository<CartItem> _cartItemRepository;
         private readonly IMediaService _mediaService;
         private readonly ICouponService _couponService;
+        private readonly bool _isProductPriceIncludeTax;
 
-        public CartService(IRepository<Cart> cartRepository, IRepository<CartItem> cartItemRepository, ICouponService couponService, IMediaService mediaService)
+        public CartService(IRepository<Cart> cartRepository, IRepository<CartItem> cartItemRepository, ICouponService couponService, IMediaService mediaService, IConfiguration config)
         {
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _couponService = couponService;
             _mediaService = mediaService;
+            _isProductPriceIncludeTax = config.GetValue<bool>("Catalog.IsProductPriceIncludeTax");
         }
 
         public async Task AddToCart(long userId, long productId, int quantity)
@@ -32,7 +35,8 @@ namespace SimplCommerce.Module.ShoppingCart.Services
             {
                 cart = new Cart
                 {
-                    UserId = userId
+                    UserId = userId,
+                    IsProductPriceIncludeTax = _isProductPriceIncludeTax
                 };
 
                 _cartRepository.Add(cart);
@@ -71,6 +75,7 @@ namespace SimplCommerce.Module.ShoppingCart.Services
             {
                 Id = cart.Id,
                 CouponCode = cart.CouponCode,
+                IsProductPriceIncludeTax = cart.IsProductPriceIncludeTax,
                 TaxAmount = cart.TaxAmount,
                 ShippingAmount = cart.ShippingAmount
             };
@@ -103,6 +108,10 @@ namespace SimplCommerce.Module.ShoppingCart.Services
                 {
                     cartVm.Discount = couponValidationResult.DiscountAmount;
                 }
+                else
+                {
+                    cartVm.CouponValidationErrorMessage = couponValidationResult.ErrorMessage;
+                }
             }
 
             return cartVm;
@@ -129,10 +138,40 @@ namespace SimplCommerce.Module.ShoppingCart.Services
 
         public async Task MigrateCart(long fromUserId, long toUserId)
         {
-            var cart = _cartRepository.Query().FirstOrDefault(x => x.UserId == fromUserId && x.IsActive);
-            if (cart != null)
+            var cartFrom = _cartRepository.Query().Include(x => x.Items).FirstOrDefault(x => x.UserId == fromUserId && x.IsActive);
+            if (cartFrom != null && cartFrom.Items.Any())
             {
-                cart.UserId = toUserId;
+                var cartTo = _cartRepository.Query().Include(x => x.Items).FirstOrDefault(x => x.UserId == toUserId && x.IsActive);
+                if (cartTo == null)
+                {
+                    cartTo = new Cart
+                    {
+                        UserId = toUserId
+                    };
+
+                    _cartRepository.Add(cartTo);
+                }
+
+                foreach (var fromItem in cartFrom.Items)
+                {
+                    var toItem = cartTo.Items.FirstOrDefault(x => x.ProductId == fromItem.ProductId);
+                    if(toItem == null)
+                    {
+                        toItem = new CartItem
+                        {
+                            Cart = cartTo,
+                            ProductId = fromItem.ProductId,
+                            Quantity = fromItem.Quantity,
+                            CreatedOn = DateTimeOffset.Now
+                        };
+                        cartTo.Items.Add(toItem);
+                    }
+                    else
+                    {
+                        toItem.Quantity = toItem.Quantity + fromItem.Quantity;
+                    }
+                }
+
                await _cartRepository.SaveChangesAsync();
             }
         }

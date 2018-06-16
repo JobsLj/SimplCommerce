@@ -33,9 +33,11 @@ namespace SimplCommerce.Module.Catalog.Models
 
         public bool IsAllowToOrder { get; set; }
 
-        public int? StockQuantity { get; set; }
+        public int StockQuantity { get; set; }
 
         public string Sku { get; set; }
+
+        public string Gtin { get; set; }
 
         public string NormalizedName { get; set; }
 
@@ -56,6 +58,8 @@ namespace SimplCommerce.Module.Catalog.Models
         public IList<ProductOptionValue> OptionValues { get; protected set; } = new List<ProductOptionValue>();
 
         public IList<ProductCategory> Categories { get; protected set; } = new List<ProductCategory>();
+
+        public IList<ProductPriceHistory> PriceHistories { get; protected set; } = new List<ProductPriceHistory>();
 
         public int ReviewsCount { get; set; }
 
@@ -79,12 +83,6 @@ namespace SimplCommerce.Module.Catalog.Models
         {
             media.Product = this;
             Medias.Add(media);
-        }
-
-        public void RemoveMedia(ProductMedia media)
-        {
-            media.Product = null;
-            Medias.Remove(media);
         }
 
         public void AddAttributeValue(ProductAttributeValue attributeValue)
@@ -132,6 +130,7 @@ namespace SimplCommerce.Module.Catalog.Models
             product.StockQuantity = StockQuantity;
             product.BrandId = BrandId;
             product.VendorId = VendorId;
+            product.TaxClassId = TaxClassId;
 
             foreach (var attribute in AttributeValues)
             {

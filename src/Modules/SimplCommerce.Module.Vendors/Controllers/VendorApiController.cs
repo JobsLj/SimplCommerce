@@ -65,34 +65,39 @@ namespace SimplCommerce.Module.Vendors.Controllers
                     Name = x.Name,
                     Email = x.Email,
                     IsActive = x.IsActive,
-                    SeoTitle = x.SeoTitle,
+                    Slug = x.Slug,
                     CreatedOn = x.CreatedOn
                 });
 
             return Json(vendors);
         }
 
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            var vendors = _vendorRepository.Query().Select(x => new
+            var vendors = await _vendorRepository.Query().Select(x => new
             {
                 Id = x.Id,
                 Name = x.Name,
-                Slug = x.SeoTitle
-            });
+                Slug = x.Slug
+            }).ToListAsync();
 
             return Json(vendors);
         }
 
         [HttpGet("{id}")]
-        public IActionResult Get(long id)
+        public async Task<IActionResult> Get(long id)
         {
-            var vendor = _vendorRepository.Query().Include(x => x.Users).FirstOrDefault(x => x.Id == id);
+            var vendor = await _vendorRepository.Query().Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == id);
+            if(vendor == null)
+            {
+                return NotFound();
+            }
+
             var model = new VendorForm
             {
                 Id = vendor.Id,
                 Name = vendor.Name,
-                Slug = vendor.SeoTitle,
+                Slug = vendor.Slug,
                 Email = vendor.Email,
                 Description = vendor.Description,
                 IsActive = vendor.IsActive,
@@ -103,58 +108,56 @@ namespace SimplCommerce.Module.Vendors.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] VendorForm model)
+        public async Task<IActionResult> Post([FromBody] VendorForm model)
         {
             if (ModelState.IsValid)
             {
                 var vendor = new Vendor
                 {
                     Name = model.Name,
-                    SeoTitle = model.Slug,
+                    Slug = model.Slug,
                     Email = model.Email,
                     Description = model.Description,
                     IsActive = model.IsActive
                 };
 
-                _vendorService.Create(vendor);
-
-                return Ok();
+                await _vendorService.Create(vendor);
+                return CreatedAtAction(nameof(Get), new { id = vendor.Id }, null);
             }
-            return new BadRequestObjectResult(ModelState);
+            return BadRequest(ModelState);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(long id, [FromBody] VendorForm model)
+        public async Task<IActionResult> Put(long id, [FromBody] VendorForm model)
         {
             if (ModelState.IsValid)
             {
                 var vendor = _vendorRepository.Query().FirstOrDefault(x => x.Id == id);
                 vendor.Name = model.Name;
-                vendor.SeoTitle = model.Slug;
+                vendor.Slug = model.Slug;
                 vendor.Email = model.Email;
                 vendor.Description = model.Description;
                 vendor.IsActive = model.IsActive;
                 vendor.UpdatedOn = DateTimeOffset.Now;
 
-                _vendorService.Update(vendor);
-
-                return Ok();
+                await _vendorService.Update(vendor);
+                return Accepted();
             }
 
-            return new BadRequestObjectResult(ModelState);
+            return BadRequest(ModelState);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var vendor = _vendorRepository.Query().FirstOrDefault(x => x.Id == id);
+            var vendor = await _vendorRepository.Query().FirstOrDefaultAsync(x => x.Id == id);
             if (vendor == null)
             {
-                return new NotFoundResult();
+                return NotFound();
             }
 
             await _vendorService.Delete(vendor);
-            return Json(true);
+            return NoContent();
         }
     }
 }

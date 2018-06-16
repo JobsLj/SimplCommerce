@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -7,6 +8,7 @@ using System.Runtime.Loader;
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Autofac.Features.Variance;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -14,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +27,7 @@ using SimplCommerce.Module.Core.Data;
 using SimplCommerce.Module.Core.Extensions;
 using SimplCommerce.Module.Core.Models;
 using SimplCommerce.Infrastructure.Web.ModelBinders;
+using SimplCommerce.Infrastructure.Web;
 
 namespace SimplCommerce.WebHost.Extensions
 {
@@ -37,40 +41,24 @@ namespace SimplCommerce.WebHost.Extensions
 
             foreach (var moduleFolder in moduleFolders)
             {
+                Assembly moduleMainAssembly = null;
                 var binFolder = new DirectoryInfo(Path.Combine(moduleFolder.FullName, "bin"));
-                if (!binFolder.Exists)
+                if (binFolder.Exists)
                 {
-                    continue;
+                    moduleMainAssembly = LoadModule(moduleFolder, binFolder);
                 }
 
-                foreach (var file in binFolder.GetFileSystemInfos("*.dll", SearchOption.AllDirectories))
+                if (moduleMainAssembly == null)
                 {
-                    Assembly assembly;
-                    try
-                    {
-                        assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(file.FullName);
-                    }
-                    catch (FileLoadException)
-                    {
-                        // Get loaded assembly
-                        assembly = Assembly.Load(new AssemblyName(Path.GetFileNameWithoutExtension(file.Name)));
-
-                        if (assembly == null)
-                        {
-                            throw;
-                        }
-                    }
-
-                    if (assembly.FullName.Contains(moduleFolder.Name))
-                    {
-                        modules.Add(new ModuleInfo
-                        {
-                            Name = moduleFolder.Name,
-                            Assembly = assembly,
-                            Path = moduleFolder.FullName
-                        });
-                    }
+                    moduleMainAssembly = Assembly.Load(new AssemblyName(moduleFolder.Name));
                 }
+
+                modules.Add(new ModuleInfo
+                {
+                    Name = moduleFolder.Name,
+                    Assembly = moduleMainAssembly,
+                    Path = moduleFolder.FullName
+                });
             }
 
             foreach (var module in modules)
@@ -84,6 +72,49 @@ namespace SimplCommerce.WebHost.Extensions
 
             GlobalConfiguration.Modules = modules;
             return services;
+        }
+
+        private static Assembly LoadModule(DirectoryInfo moduleFolder, DirectoryInfo binFolder)
+        {
+            Assembly moduleMainAssembly = null;
+
+            foreach (var file in binFolder.GetFileSystemInfos("*.dll", SearchOption.AllDirectories))
+            {
+                Assembly assembly;
+                try
+                {
+                    assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(file.FullName);
+                }
+                catch (FileLoadException)
+                {
+                    // Get loaded assembly
+                    assembly = Assembly.Load(new AssemblyName(Path.GetFileNameWithoutExtension(file.Name)));
+
+                    if (assembly == null)
+                    {
+                        throw;
+                    }
+
+                    var fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+                    string loadedAssemblyVersion = fvi.FileVersion;
+
+                    fvi = FileVersionInfo.GetVersionInfo(file.FullName);
+                    string tryToLoadAssemblyVersion = fvi.FileVersion;
+
+                    // Or log the exception somewhere and don't add the module to list so that it will not be initialized
+                    if (tryToLoadAssemblyVersion != loadedAssemblyVersion)
+                    {
+                        throw new Exception($"Cannot load {file.FullName} {tryToLoadAssemblyVersion} because {assembly.Location} {loadedAssemblyVersion} has been loaded");
+                    }
+                }
+
+                if (assembly.FullName.Contains(moduleFolder.Name))
+                {
+                    moduleMainAssembly = assembly;
+                }
+            }
+
+            return moduleMainAssembly;
         }
 
         public static IServiceCollection AddCustomizedMvc(this IServiceCollection services, IList<ModuleInfo> modules)
@@ -101,7 +132,8 @@ namespace SimplCommerce.WebHost.Extensions
                     }
                 })
                 .AddViewLocalization()
-                .AddDataAnnotationsLocalization();
+                .AddDataAnnotationsLocalization()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1); ;
 
             foreach (var module in modules)
             {
@@ -114,14 +146,22 @@ namespace SimplCommerce.WebHost.Extensions
         public static IServiceCollection AddCustomizedIdentity(this IServiceCollection services)
         {
             services
-                .AddIdentity<User, Role>()
+                .AddIdentity<User, Role>(options =>
+                {
+                    options.Password.RequireDigit = false;
+                    options.Password.RequiredLength = 4;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequiredUniqueChars = 0;
+                })
                 .AddRoleStore<SimplRoleStore>()
                 .AddUserStore<SimplUserStore>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(o => o.LoginPath = new PathString("/login"))
-                
+
                 .AddFacebook(x =>
             {
                 x.AppId = "1716532045292977";
@@ -160,20 +200,25 @@ namespace SimplCommerce.WebHost.Extensions
             var builder = new ContainerBuilder();
             builder.RegisterGeneric(typeof(Repository<>)).As(typeof(IRepository<>));
             builder.RegisterGeneric(typeof(RepositoryWithTypedId<,>)).As(typeof(IRepositoryWithTypedId<,>));
+            builder.RegisterType<RazorViewRenderer>().As<IRazorViewRenderer>();
 
-            builder.RegisterAssemblyTypes(typeof(IMediator).GetTypeInfo().Assembly).AsImplementedInterfaces();
-            builder.RegisterType<SequentialMediator>().As<IMediator>();
-            builder.Register<SingleInstanceFactory>(ctx =>
-            {
-                var c = ctx.Resolve<IComponentContext>();
-                return t => c.Resolve(t);
-            });
+            builder.RegisterSource(new ContravariantRegistrationSource());
+            builder.RegisterType<SequentialMediator>().As<IMediator>().InstancePerLifetimeScope();
+            builder
+              .Register<SingleInstanceFactory>(ctx =>
+              {
+                  var c = ctx.Resolve<IComponentContext>();
+                  return t => { object o; return c.TryResolve(t, out o) ? o : null; };
+              })
+              .InstancePerLifetimeScope();
 
-            builder.Register<MultiInstanceFactory>(ctx =>
-            {
-                var c = ctx.Resolve<IComponentContext>();
-                return t => (IEnumerable<object>)c.Resolve(typeof(IEnumerable<>).MakeGenericType(t));
-            });
+            builder
+              .Register<MultiInstanceFactory>(ctx =>
+              {
+                  var c = ctx.Resolve<IComponentContext>();
+                  return t => (IEnumerable<object>)c.Resolve(typeof(IEnumerable<>).MakeGenericType(t));
+              })
+              .InstancePerLifetimeScope();
 
             foreach (var module in GlobalConfiguration.Modules)
             {

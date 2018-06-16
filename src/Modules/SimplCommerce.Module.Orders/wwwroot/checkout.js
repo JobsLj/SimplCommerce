@@ -20,6 +20,8 @@
             newShippingAddress: {
                 countryId: $('#NewAddressForm_CountryId').val() || 0,
                 stateOrProvinceId: $('#NewAddressForm_StateOrProvinceId').val() || 0,
+                districtId: $('#NewAddressForm_DistrictId').val(),
+                zipCode: $('#NewAddressForm_ZipCode').val()
             }
         };
 
@@ -40,11 +42,17 @@
                         </label> \
                        </div>')
                     });
+                    $('.btn-order').prop('disabled', false);
                 } else {
                     $shippingMethods.append("Sorry, this items can't be shipped to your selected address");
+                    $('.btn-order').prop('disabled', true);
                 }
 
-                $('#orderSummaryTax').text(data.cart.taxAmountString);
+                var $tax = $('#orderSummaryTax');
+                if ($tax) {
+                    $tax.text(data.cart.taxAmountString);
+                }
+
                 $('#orderTotal').text(data.cart.orderTotalString);
                 $('#orderSummaryShipping').text(data.cart.shippingAmountString);
 
@@ -57,7 +65,7 @@
         toggleCreateShippingAddress();
     });
 
-    $(document).on('change', 'input[name=shippingAddressId], #NewAddressForm_StateOrProvinceId, #shippingMethods input:radio', function () {
+    $(document).on('change', 'input[name=shippingAddressId], #NewAddressForm_StateOrProvinceId, #NewAddressForm_DistrictId, #NewAddressForm_ZipCode, #shippingMethods input:radio', function () {
         updateShippingInfo();
     });
 
@@ -70,29 +78,34 @@
 
     $('#NewAddressForm_CountryId').on('change', function () {
         var countryId = this.value;
+        $('#NewAddressForm_ZipCode').val('');
 
-        $.getJSON('/api/countries/' + countryId + '/states-provinces', function (data) {
+        $.getJSON('/api/country-states-provinces/' + countryId, function (data) {
             var $stateOrProvinceSelect = $("#NewAddressForm_StateOrProvinceId");
             resetSelect($stateOrProvinceSelect);
 
             var $districtSelect = $("#NewAddressForm_DistrictId");
             resetSelect($districtSelect);
 
-            $.each(data, function (index, option) {
+            $.each(data.statesOrProvinces, function (index, option) {
                 $stateOrProvinceSelect.append($("<option></option>").attr("value", option.id).text(option.name));
             });
+
+            $("#form-group-district").toggleClass("d-none", !data.isDistrictEnabled);
+            $("#form-group-city").toggleClass("d-none", !data.isCityEnabled);
+            $("#form-group-postalcode").toggleClass("d-none", !data.isZipCodeEnabled);
         });
     });
 
     $('#NewAddressForm_StateOrProvinceId').on('change', function () {
         var selectedStateOrProvinceId = this.value;
 
-        $.getJSON("/Location/GetDistricts/" + selectedStateOrProvinceId, function (data) {
+        $.getJSON("/api/states-provinces/" + selectedStateOrProvinceId + "/districts", function (data) {
             var $districtSelect = $("#NewAddressForm_DistrictId");
             resetSelect($districtSelect);
 
             $.each(data, function (index, option) {
-                $districtSelect.append($("<option></option>").attr("value", option.value).text(option.text));
+                $districtSelect.append($("<option></option>").attr("value", option.id).text(option.name));
             });
         });
     });

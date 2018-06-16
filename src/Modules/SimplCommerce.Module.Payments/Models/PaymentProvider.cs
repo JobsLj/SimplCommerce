@@ -2,8 +2,13 @@
 
 namespace SimplCommerce.Module.Payments.Models
 {
-    public class PaymentProvider : EntityBase
+    public class PaymentProvider : EntityBaseWithTypedId<string>
     {
+        public PaymentProvider(string id)
+        {
+            Id = id;
+        }
+
         public string Name { get; set; }
 
         public bool IsEnabled { get; set; }
@@ -16,10 +21,5 @@ namespace SimplCommerce.Module.Payments.Models
         /// Additional setting for specific provider. Stored as json string.
         /// </summary>
         public string AdditionalSettings { get; set; }
-
-        /// <summary>
-        /// The type that 
-        /// </summary>
-        public string PaymentProviderTypeName { get; set; }
     }
 }

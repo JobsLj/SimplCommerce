@@ -8,7 +8,7 @@
 
         public string ClientSecret { get; set; }
 
-        public string ExperienceProfileId { get; set; }
+        public decimal PaymentFee { get; set; }
 
         public string Environment
         {

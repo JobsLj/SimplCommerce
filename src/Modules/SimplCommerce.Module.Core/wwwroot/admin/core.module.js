@@ -50,10 +50,50 @@
                     templateUrl: 'modules/core/admin/themes/theme-list.html',
                     controller: 'ThemeListCtrl as vm'
                 })
+                .state('online-themes', {
+                    url: '/online-themes',
+                    templateUrl: 'modules/core/admin/themes/online-theme-list.html',
+                    controller: 'OnlineThemeListCtrl as vm'
+                })
+                .state('theme-details', {
+                    url: '/theme-details/:name',
+                    templateUrl: 'modules/core/admin/themes/theme-details.html',
+                    controller: 'ThemeDetailsCtrl as vm'
+                })
                 .state('countries', {
                     url: '/countries',
                     templateUrl: 'modules/core/admin/countries/country-list.html',
                     controller: 'CountryListCtrl as vm'
+                })
+                .state('country-create', {
+                    url: '/countries/create',
+                    templateUrl: 'modules/core/admin/countries/country-form.html',
+                    controller: 'CountryFormCtrl as vm'
+                })
+                .state('country-edit', {
+                    url: '/countries/edit/:id',
+                    templateUrl: 'modules/core/admin/countries/country-form.html',
+                    controller: 'CountryFormCtrl as vm'
+                })
+                .state('states-provinces', {
+                    url: '/states-provinces',
+                    templateUrl: 'modules/core/admin/stateprovince/state-province-list.html',
+                    controller: 'StateProvinceListCtrl as vm'
+                })
+                .state('country-states-provinces', {
+                    url: '/countries/:countryId/states-provinces',
+                    templateUrl: 'modules/core/admin/stateprovince/state-province-list.html',
+                    controller: 'StateProvinceListCtrl as vm'
+                })
+                .state('state-province-create', {
+                    url: '/countries/:countryId/state-province/create',
+                    templateUrl: 'modules/core/admin/stateprovince/state-province-form.html',
+                    controller: 'StateProvinceFormCtrl as vm'
+                })
+                .state('state-province-edit', {
+                    url: '/countries/:countryId/state-province/edit/:id',
+                    templateUrl: 'modules/core/admin/stateprovince/state-province-form.html',
+                    controller: 'StateProvinceFormCtrl as vm'
                 });
         }]);
 })();

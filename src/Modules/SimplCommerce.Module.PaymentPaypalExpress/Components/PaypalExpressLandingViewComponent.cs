@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using SimplCommerce.Infrastructure.Data;
+using SimplCommerce.Infrastructure.Web;
 using SimplCommerce.Module.PaymentPaypalExpress.Models;
 using SimplCommerce.Module.PaymentPaypalExpress.ViewModels;
 using SimplCommerce.Module.Payments.Models;
@@ -11,9 +12,9 @@ namespace SimplCommerce.Module.PaymentPaypalExpress.Components
 {
     public class PaypalExpressLandingViewComponent : ViewComponent
     {
-        private readonly IRepository<PaymentProvider> _paymentProviderRepository;
+        private readonly IRepositoryWithTypedId<PaymentProvider, string> _paymentProviderRepository;
 
-        public PaypalExpressLandingViewComponent(IRepository<PaymentProvider> paymentProviderRepository)
+        public PaypalExpressLandingViewComponent(IRepositoryWithTypedId<PaymentProvider, string> paymentProviderRepository)
         {
             _paymentProviderRepository = paymentProviderRepository;
         }
@@ -25,8 +26,9 @@ namespace SimplCommerce.Module.PaymentPaypalExpress.Components
 
             var model = new PaypalExpressCheckoutForm();
             model.Environment = paypalExpressSetting.Environment;
+            model.PaymentFee = paypalExpressSetting.PaymentFee;
 
-            return View("/Modules/SimplCommerce.Module.PaymentPaypalExpress/Views/Components/PaypalExpressLanding.cshtml", model);
+            return View(this.GetViewPath(), model);
         }
     }
 }

@@ -7,11 +7,17 @@ namespace SimplCommerce.Module.ShippingTableRate.Models
     {
         public Country Country { get; set; }
 
-        public long? CountryId { get; set; }
+        public string CountryId { get; set; }
 
         public StateOrProvince StateOrProvince { get; set; }
 
         public long? StateOrProvinceId { get; set; }
+
+        public District District { get; set; }
+
+        public long? DistrictId { get; set; }
+
+        public string ZipCode { get; set; }
 
         public string Note { get; set; }
 

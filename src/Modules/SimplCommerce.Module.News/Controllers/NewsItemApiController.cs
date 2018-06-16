@@ -72,7 +72,7 @@ namespace SimplCommerce.Module.News.Controllers
                 {
                     Id = x.Id,
                     Name = x.Name,
-                    Slug = x.SeoTitle,
+                    Slug = x.Slug,
                     IsPublished = x.IsPublished,
                     CreatedOn = x.CreatedOn
                 });
@@ -80,18 +80,26 @@ namespace SimplCommerce.Module.News.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult Get(long id)
+        public async Task<IActionResult> Get(long id)
         {
-            var newsItem = _newsItemRepository.Query()
+            var newsItem = await _newsItemRepository.Query()
                .Include(x => x.ThumbnailImage)
                .Include(x => x.Categories)
-               .FirstOrDefault(x => x.Id == id);
+               .FirstOrDefaultAsync(x => x.Id == id);
+
+            if(newsItem == null)
+            {
+                return NotFound();
+            }
 
             var model = new NewsItemForm()
             {
                 Name = newsItem.Name,
                 Id = newsItem.Id,
-                Slug = newsItem.SeoTitle,
+                Slug = newsItem.Slug,
+                MetaTitle = newsItem.MetaTitle,
+                MetaKeywords = newsItem.MetaKeywords,
+                MetaDescription = newsItem.MetaDescription,
                 ShortContent = newsItem.ShortContent,
                 FullContent = newsItem.FullContent,
                 IsPublished = newsItem.IsPublished,
@@ -107,14 +115,17 @@ namespace SimplCommerce.Module.News.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return new BadRequestObjectResult(ModelState);
+                return BadRequest(ModelState);
             }
 
             var currentUser = await _workContext.GetCurrentUser();
             var newsItem = new NewsItem
             {
                 Name = model.Name,
-                SeoTitle = model.Slug,
+                Slug = model.Slug,
+                MetaTitle = model.MetaTitle,
+                MetaKeywords = model.MetaKeywords,
+                MetaDescription = model.MetaDescription,
                 ShortContent = model.ShortContent,
                 FullContent = model.FullContent,
                 IsPublished = model.IsPublished,
@@ -140,18 +151,25 @@ namespace SimplCommerce.Module.News.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return new BadRequestObjectResult(ModelState);
+                return BadRequest(ModelState);
             } 
 
-            var newsItem = _newsItemRepository.Query()
+            var newsItem = await _newsItemRepository.Query()
                .Include(x => x.ThumbnailImage)
                .Include(x => x.Categories)
-               .FirstOrDefault(x => x.Id == id);
+               .FirstOrDefaultAsync(x => x.Id == id);
+            if(newsItem == null)
+            {
+                return NotFound();
+            }
 
             var currentUser = await _workContext.GetCurrentUser();
 
             newsItem.Name = model.Name;
-            newsItem.SeoTitle = model.Slug;
+            newsItem.Slug = model.Slug;
+            newsItem.MetaTitle = model.MetaTitle;
+            newsItem.MetaKeywords = model.MetaKeywords;
+            newsItem.MetaDescription = model.MetaDescription;
             newsItem.ShortContent = model.ShortContent;
             newsItem.FullContent = model.FullContent;
             newsItem.IsPublished = model.IsPublished;
@@ -173,7 +191,7 @@ namespace SimplCommerce.Module.News.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
-            var newsItem = _newsItemRepository.Query().FirstOrDefault(x => x.Id == id);
+            var newsItem = await _newsItemRepository.Query().FirstOrDefaultAsync(x => x.Id == id);
             if (newsItem == null)
             {
                 return NotFound();

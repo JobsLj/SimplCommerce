@@ -32,6 +32,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
         private readonly IRepository<ProductOptionValue> _productOptionValueRepository;
         private readonly IRepository<Product> _productRepository;
         private readonly IProductService _productService;
+        private readonly IRepository<ProductMedia> _productMediaRepository;
         private readonly IWorkContext _workContext;
 
         public ProductApiController(
@@ -42,6 +43,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             IRepository<ProductCategory> productCategoryRepository,
             IRepository<ProductOptionValue> productOptionValueRepository,
             IRepository<ProductAttributeValue> productAttributeValueRepository,
+            IRepository<ProductMedia> productMediaRepository,
             IWorkContext workContext)
         {
             _productRepository = productRepository;
@@ -51,6 +53,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             _productCategoryRepository = productCategoryRepository;
             _productOptionValueRepository = productOptionValueRepository;
             _productAttributeValueRepository = productAttributeValueRepository;
+            _productMediaRepository = productMediaRepository;
             _workContext = workContext;
         }
 
@@ -76,7 +79,12 @@ namespace SimplCommerce.Module.Catalog.Controllers
             {
                 Id = product.Id,
                 Name = product.Name,
-                Slug = product.SeoTitle,
+                Slug = product.Slug,
+                MetaTitle = product.MetaTitle,
+                MetaKeywords = product.MetaKeywords,
+                MetaDescription = product.MetaDescription,
+                Sku = product.Sku,
+                Gtin = product.Gtin,
                 ShortDescription = product.ShortDescription,
                 Description = product.Description,
                 Specification = product.Specification,
@@ -89,7 +97,6 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 IsPublished = product.IsPublished,
                 IsCallForPricing =  product.IsCallForPricing,
                 IsAllowToOrder = product.IsAllowToOrder,
-                IsOutOfStock = product.StockQuantity == 0,
                 CategoryIds = product.Categories.Select(x => x.CategoryId).ToList(),
                 ThumbnailImageUrl = _mediaService.GetThumbnailUrl(product.ThumbnailImage),
                 BrandId = product.BrandId,
@@ -131,6 +138,8 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 {
                     Id = variation.Id,
                     Name = variation.Name,
+                    Sku = variation.Sku,
+                    Gtin = variation.Gtin,
                     Price = variation.Price,
                     OldPrice = variation.OldPrice,
                     NormalizedName = variation.NormalizedName,
@@ -253,7 +262,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return new BadRequestObjectResult(ModelState);
+                return BadRequest(ModelState);
             }
 
             var currentUser = await _workContext.GetCurrentUser();
@@ -261,7 +270,12 @@ namespace SimplCommerce.Module.Catalog.Controllers
             var product = new Product
             {
                 Name = model.Product.Name,
-                SeoTitle = model.Product.Slug,
+                Slug = model.Product.Slug,
+                MetaTitle = model.Product.MetaTitle,
+                MetaKeywords = model.Product.MetaKeywords,
+                MetaDescription = model.Product.MetaDescription,
+                Sku = model.Product.Sku,
+                Gtin = model.Product.Gtin,
                 ShortDescription = model.Product.ShortDescription,
                 Description = model.Product.Description,
                 Specification = model.Product.Specification,
@@ -284,15 +298,6 @@ namespace SimplCommerce.Module.Catalog.Controllers
             if (!User.IsInRole("admin"))
             {
                 product.VendorId = currentUser.VendorId;
-            }
-
-            if (model.Product.IsOutOfStock)
-            {
-                product.StockQuantity = 0;
-            }
-            else
-            {
-                product.StockQuantity = null;
             }
 
             var optionIndex = 0;
@@ -331,8 +336,11 @@ namespace SimplCommerce.Module.Catalog.Controllers
 
             await SaveProductMedias(model, product);
 
-            MapProductVariationVmToProduct(model, product);
+            MapProductVariationVmToProduct(currentUser, model, product);
             MapProductLinkVmToProduct(model, product);
+
+            var productPriceHistory = CreatePriceHistory(currentUser, product);
+            product.PriceHistories.Add(productPriceHistory);
 
             _productService.Create(product);
             return CreatedAtAction(nameof(Get), new { id = product.Id }, null);
@@ -363,11 +371,27 @@ namespace SimplCommerce.Module.Catalog.Controllers
             var currentUser = await _workContext.GetCurrentUser();
             if (!User.IsInRole("admin") && product.VendorId != currentUser.VendorId)
             {
-                return new BadRequestObjectResult(new { error = "You don't have permission to manage this product" });
+                return BadRequest(new { error = "You don't have permission to manage this product" });
             }
 
+            var isPriceChanged = false;
+            if (product.Price != model.Product.Price ||
+                product.OldPrice != model.Product.OldPrice ||
+                product.SpecialPrice != model.Product.SpecialPrice ||
+                product.SpecialPriceStart != model.Product.SpecialPriceStart ||
+                product.SpecialPriceEnd != model.Product.SpecialPriceEnd)
+            {
+                isPriceChanged = true;
+            }
+
+
             product.Name = model.Product.Name;
-            product.SeoTitle = model.Product.Slug;
+            product.Slug = model.Product.Slug;
+            product.MetaTitle = model.Product.MetaTitle;
+            product.MetaKeywords = model.Product.MetaKeywords;
+            product.MetaDescription = model.Product.MetaDescription;
+            product.Sku = model.Product.Sku;
+            product.Gtin = model.Product.Gtin;
             product.ShortDescription = model.Product.ShortDescription;
             product.Description = model.Product.Description;
             product.Specification = model.Product.Specification;
@@ -384,13 +408,10 @@ namespace SimplCommerce.Module.Catalog.Controllers
             product.IsAllowToOrder = model.Product.IsAllowToOrder;
             product.UpdatedBy = currentUser;
 
-            if (model.Product.IsOutOfStock)
+            if (isPriceChanged)
             {
-                product.StockQuantity = 0;
-            }
-            else
-            {
-                product.StockQuantity = null;
+                var productPriceHistory = CreatePriceHistory(currentUser, product);
+                product.PriceHistories.Add(productPriceHistory);
             }
 
             await SaveProductMedias(model, product);
@@ -398,14 +419,14 @@ namespace SimplCommerce.Module.Catalog.Controllers
             foreach (var productMediaId in model.Product.DeletedMediaIds)
             {
                 var productMedia = product.Medias.First(x => x.Id == productMediaId);
+                _productMediaRepository.Remove(productMedia);
                 await _mediaService.DeleteMediaAsync(productMedia.Media);
-                product.RemoveMedia(productMedia);
             }
 
             AddOrDeleteProductOption(model, product);
             AddOrDeleteProductAttribute(model, product);
             AddOrDeleteCategories(model, product);
-            AddOrDeleteProductVariation(model, product);
+            AddOrDeleteProductVariation(currentUser, model, product);
             AddOrDeleteProductLinks(model, product);
 
             _productService.Update(product);
@@ -454,7 +475,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             return NoContent();
         }
 
-        private static void MapProductVariationVmToProduct(ProductForm model, Product product)
+        private static void MapProductVariationVmToProduct(User loginUser, ProductForm model, Product product)
         {
             foreach (var variationVm in model.Product.Variations)
             {
@@ -466,7 +487,9 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 };
 
                 productLink.LinkedProduct.Name = variationVm.Name;
-                productLink.LinkedProduct.SeoTitle = variationVm.Name.ToUrlFriendly();
+                productLink.LinkedProduct.Slug = variationVm.Name.ToUrlFriendly();
+                productLink.LinkedProduct.Sku = variationVm.Sku;
+                productLink.LinkedProduct.Gtin = variationVm.Gtin;
                 productLink.LinkedProduct.Price = variationVm.Price;
                 productLink.LinkedProduct.OldPrice = variationVm.OldPrice;
                 productLink.LinkedProduct.NormalizedName = variationVm.NormalizedName;
@@ -485,8 +508,25 @@ namespace SimplCommerce.Module.Catalog.Controllers
 
                 productLink.LinkedProduct.ThumbnailImage = product.ThumbnailImage;
 
+                var productPriceHistory = CreatePriceHistory(loginUser, productLink.LinkedProduct);
+                product.PriceHistories.Add(productPriceHistory);
+
                 product.AddProductLinks(productLink);
             }
+        }
+
+        private static ProductPriceHistory CreatePriceHistory(User loginUser, Product product)
+        {
+            return new ProductPriceHistory
+            {
+                CreatedBy = loginUser,
+                Product = product,
+                Price = product.Price,
+                OldPrice = product.OldPrice,
+                SpecialPrice = product.SpecialPrice,
+                SpecialPriceStart = product.SpecialPriceStart,
+                SpecialPriceEnd = product.SpecialPriceEnd
+            };
         }
 
         private static void MapProductLinkVmToProduct(ProductForm model, Product product)
@@ -579,7 +619,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             }
         }
 
-        private void AddOrDeleteProductVariation(ProductForm model, Product product)
+        private void AddOrDeleteProductVariation(User loginUser,  ProductForm model, Product product)
         {
             foreach (var productVariationVm in model.Product.Variations)
             {
@@ -594,7 +634,9 @@ namespace SimplCommerce.Module.Catalog.Controllers
                     };
 
                     productLink.LinkedProduct.Name = productVariationVm.Name;
-                    productLink.LinkedProduct.SeoTitle = StringHelper.ToUrlFriendly(productVariationVm.Name);
+                    productLink.LinkedProduct.Slug = StringHelper.ToUrlFriendly(productVariationVm.Name);
+                    productLink.LinkedProduct.Sku = productVariationVm.Sku;
+                    productLink.LinkedProduct.Gtin = productVariationVm.Gtin;
                     productLink.LinkedProduct.Price = productVariationVm.Price;
                     productLink.LinkedProduct.OldPrice = productVariationVm.OldPrice;
                     productLink.LinkedProduct.NormalizedName = productVariationVm.NormalizedName;
@@ -612,13 +654,31 @@ namespace SimplCommerce.Module.Catalog.Controllers
                         });
                     }
 
+                    var productPriceHistory = CreatePriceHistory(loginUser, productLink.LinkedProduct);
+                    productLink.LinkedProduct.PriceHistories.Add(productPriceHistory);
+
                     product.AddProductLinks(productLink);
                 }
                 else
                 {
+                    var isPriceChanged = false;
+                    if(productLink.LinkedProduct.Price != productVariationVm.Price ||
+                        productLink.LinkedProduct.OldPrice != productVariationVm.OldPrice)
+                    {
+                        isPriceChanged = true;
+                    }
+
+                    productLink.LinkedProduct.Sku = productVariationVm.Sku;
+                    productLink.LinkedProduct.Gtin = productVariationVm.Gtin;
                     productLink.LinkedProduct.Price = productVariationVm.Price;
                     productLink.LinkedProduct.OldPrice = productVariationVm.OldPrice;
                     productLink.LinkedProduct.IsDeleted = false;
+
+                    if (isPriceChanged)
+                    {
+                        var productPriceHistory = CreatePriceHistory(loginUser, productLink.LinkedProduct);
+                        productLink.LinkedProduct.PriceHistories.Add(productPriceHistory);
+                    }
                 }
             }
 

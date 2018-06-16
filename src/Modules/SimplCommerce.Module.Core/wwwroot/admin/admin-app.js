@@ -30,7 +30,10 @@
         'simplAdmin.shipping-tablerate',
         'simplAdmin.payments',
         'simplAdmin.paymentStripe',
-        'simplAdmin.paymentPaypalExpress'
+        'simplAdmin.paymentPaypalExpress',
+        'simplAdmin.inventory',
+        'simplAdmin.shipment',
+        'simplAdmin.paymentCoD'
     ]);
 
     toastr.options.closeButton = true;

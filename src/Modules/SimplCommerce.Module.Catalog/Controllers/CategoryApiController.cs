@@ -34,21 +34,24 @@ namespace SimplCommerce.Module.Catalog.Controllers
             _mediaService = mediaService;
         }
 
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            var gridData = _categoryService.GetAll();
+            var gridData = await _categoryService.GetAll();
             return Json(gridData);
         }
 
         [HttpGet("{id}")]
-        public IActionResult Get(long id)
+        public async Task<IActionResult> Get(long id)
         {
-            var category = _categoryRepository.Query().Include(x => x.ThumbnailImage).FirstOrDefault(x => x.Id == id);
+            var category = await _categoryRepository.Query().Include(x => x.ThumbnailImage).FirstOrDefaultAsync(x => x.Id == id);
             var model = new CategoryForm
             {
                 Id = category.Id,
                 Name = category.Name,
-                Slug = category.SeoTitle,
+                Slug = category.Slug,
+                MetaTitle = category.MetaTitle,
+                MetaKeywords = category.MetaKeywords,
+                MetaDescription = category.MetaDescription,
                 DisplayOrder = category.DisplayOrder,
                 Description = category.Description,
                 ParentId = category.ParentId,
@@ -69,7 +72,10 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 var category = new Category
                 {
                     Name = model.Name,
-                    SeoTitle = model.Slug,
+                    Slug = model.Slug,
+                    MetaTitle = model.MetaTitle,
+                    MetaKeywords = model.MetaKeywords,
+                    MetaDescription = model.MetaDescription,
                     DisplayOrder = model.DisplayOrder,
                     Description = model.Description,
                     ParentId = model.ParentId,
@@ -78,9 +84,10 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 };
 
                 await SaveCategoryImage(category, model);
-                _categoryService.Create(category);
+                await _categoryService.Create(category);
                 return CreatedAtAction(nameof(Get), new { id = category.Id }, null);
             }
+
             return BadRequest(ModelState);
         }
 
@@ -97,16 +104,24 @@ namespace SimplCommerce.Module.Catalog.Controllers
                 }
 
                 category.Name = model.Name;
-                category.SeoTitle = model.Slug;
+                category.Slug = model.Slug;
+                category.MetaTitle = model.MetaTitle;
+                category.MetaKeywords = model.MetaKeywords;
+                category.MetaDescription = model.MetaDescription;
                 category.Description = model.Description;
                 category.DisplayOrder = model.DisplayOrder;
                 category.ParentId = model.ParentId;
                 category.IncludeInMenu = model.IncludeInMenu;
                 category.IsPublished = model.IsPublished;
 
-                await SaveCategoryImage(category, model);
+                if (category.ParentId.HasValue && await HaveCircularNesting(category.Id, category.ParentId.Value))
+                {
+                    ModelState.AddModelError("ParentId", "Parent category cannot be itself children");
+                    return BadRequest(ModelState);
+                }
 
-                _categoryService.Update(category);
+                await SaveCategoryImage(category, model);
+                await _categoryService.Update(category);
 
                 return Accepted();
             }
@@ -121,7 +136,7 @@ namespace SimplCommerce.Module.Catalog.Controllers
             var category = _categoryRepository.Query().Include(x => x.Children).FirstOrDefault(x => x.Id == id);
             if (category == null)
             {
-                return new NotFoundResult();
+                return NotFound();
             }
 
             if (category.Children.Any(x => !x.IsDeleted))
@@ -130,7 +145,6 @@ namespace SimplCommerce.Module.Catalog.Controllers
             }
 
             await _categoryService.Delete(category);
-
             return NoContent();
         }
 
@@ -171,14 +185,19 @@ namespace SimplCommerce.Module.Catalog.Controllers
         }
 
         [HttpPut("update-product/{id}")]
-        public IActionResult UpdateProduct(long id, [FromBody] ProductCategoryForm model)
+        public async Task<IActionResult> UpdateProduct(long id, [FromBody] ProductCategoryForm model)
         {
-            var productCategory = _productCategoryRepository.Query().FirstOrDefault(x => x.Id == id);
+            var productCategory = await _productCategoryRepository.Query().FirstOrDefaultAsync(x => x.Id == id);
+            if(productCategory == null)
+            {
+                return NotFound();
+            }
+
             productCategory.IsFeaturedProduct = model.IsFeaturedProduct;
             productCategory.DisplayOrder = model.DisplayOrder;
 
-            _productCategoryRepository.SaveChanges();
-            return Ok();
+            await _productCategoryRepository.SaveChangesAsync();
+            return Accepted();
         }
 
         private async Task SaveCategoryImage(Category category, CategoryForm model)
@@ -203,6 +222,24 @@ namespace SimplCommerce.Module.Catalog.Controllers
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(originalFileName)}";
             await _mediaService.SaveMediaAsync(file.OpenReadStream(), fileName, file.ContentType);
             return fileName;
+        }
+
+        private async Task<bool> HaveCircularNesting(long childId, long parentId)
+        {
+            var category = await _categoryRepository.Query().FirstOrDefaultAsync(x => x.Id == parentId);
+            var parentCategoryId = category.ParentId;
+            while (parentCategoryId.HasValue)
+            {
+                if(parentCategoryId.Value == childId)
+                {
+                    return true;
+                }
+
+                var parentCategory = await _categoryRepository.Query().FirstAsync(x => x.Id == parentCategoryId);
+                parentCategoryId = parentCategory.ParentId;
+            }
+
+            return false;
         }
     }
 }

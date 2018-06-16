@@ -22,7 +22,7 @@ namespace SimplCommerce.Module.Orders.Controllers
     public class CheckoutController : Controller
     {
         private readonly IOrderService _orderService;
-        private readonly IRepository<Country> _countryRepository;
+        private readonly IRepositoryWithTypedId<Country, string> _countryRepository;
         private readonly IRepository<StateOrProvince> _stateOrProvinceRepository;
         private readonly IRepository<UserAddress> _userAddressRepository;
         private readonly IShippingPriceService _shippingPriceService;
@@ -32,7 +32,7 @@ namespace SimplCommerce.Module.Orders.Controllers
 
         public CheckoutController(
             IRepository<StateOrProvince> stateOrProvinceRepository,
-            IRepository<Country> countryRepository,
+            IRepositoryWithTypedId<Country, string> countryRepository,
             IRepository<UserAddress> userAddressRepository,
             IShippingPriceService shippingPriceService,
             IOrderService orderService,
@@ -105,15 +105,19 @@ namespace SimplCommerce.Module.Orders.Controllers
                 {
                     CountryId = model.NewShippingAddress.CountryId,
                     StateOrProvinceId = model.NewShippingAddress.StateOrProvinceId,
-                    AddressLine1 = model.NewShippingAddress.AddressLine1
+                    DistrictId = model.NewShippingAddress.DistrictId,
+                    ZipCode = model.NewShippingAddress.ZipCode,
+                    AddressLine1 = model.NewShippingAddress.AddressLine1,
                 };
             }
 
-            var orderTaxAndShippingPrice = new OrderTaxAndShippingPriceVm();
-            orderTaxAndShippingPrice.Cart = await _cartService.GetCart(currentUser.Id);
+            var orderTaxAndShippingPrice = new OrderTaxAndShippingPriceVm
+            {
+                Cart = await _cartService.GetCart(currentUser.Id)
+            };
 
             var cart = await _cartRepository.Query().Where(x => x.Id == orderTaxAndShippingPrice.Cart.Id).FirstOrDefaultAsync();
-            cart.TaxAmount = orderTaxAndShippingPrice.Cart.TaxAmount = await _orderService.GetTax(currentUser.Id, address.CountryId, address.StateOrProvinceId);
+            cart.TaxAmount = orderTaxAndShippingPrice.Cart.TaxAmount = await _orderService.GetTax(currentUser.Id, address.CountryId, address.StateOrProvinceId, address.ZipCode);
 
             var request = new GetShippingPriceRequest
             {
@@ -155,7 +159,10 @@ namespace SimplCommerce.Module.Orders.Controllers
                     AddressLine2 = x.Address.AddressLine1,
                     DistrictName = x.Address.District.Name,
                     StateOrProvinceName = x.Address.StateOrProvince.Name,
-                    CountryName = x.Address.Country.Name
+                    CountryName = x.Address.Country.Name,
+                    IsCityEnabled = x.Address.Country.IsCityEnabled,
+                    IsZipCodeEnabled = x.Address.Country.IsZipCodeEnabled,
+                    IsDistrictEnabled = x.Address.Country.IsDistrictEnabled
                 }).ToList();
 
             model.ShippingAddressId = currentUser.DefaultShippingAddressId ?? 0;
@@ -171,7 +178,8 @@ namespace SimplCommerce.Module.Orders.Controllers
 
             if (model.NewAddressForm.ShipableContries.Count == 1)
             {
-                var onlyShipableCountryId = long.Parse(model.NewAddressForm.ShipableContries.First().Value);
+                var onlyShipableCountryId = model.NewAddressForm.ShipableContries.First().Value;
+
                 model.NewAddressForm.StateOrProvinces = _stateOrProvinceRepository
                 .Query()
                 .Where(x => x.CountryId == onlyShipableCountryId)
