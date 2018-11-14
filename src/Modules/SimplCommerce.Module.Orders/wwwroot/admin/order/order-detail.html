@@ -30,6 +30,16 @@
                         <td>Order Total</td>
                         <td>{{vm.order.orderTotalString}}</td>
                     </tr>
+                    <tr ng-if="vm.order.isMasterOrder">
+                        <td>Sub Orders</td>
+                        <td>
+                            <ul class="list-inline">
+                                <li ng-repeat="id in vm.order.subOrderIds">
+                                    <a ui-sref="order-detail({id: id})">order #{{id}}</a>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
                 </table>
             </div>
             <div class="col-md-6">
@@ -120,6 +130,15 @@
 
 <div class="panel panel-default">
     <div class="panel-heading">
+        <h3 class="panel-title">{{::vm.translate.get('Order Note')}}</h3>
+    </div>
+    <div class="panel-body">
+        {{vm.order.orderNote}}
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
         <h3 class="panel-title">{{::vm.translate.get('Payment & Shipping Method')}}</h3>
     </div>
     <div class="panel-body">
@@ -159,8 +178,8 @@
                             <td>{{item.createdOn | date:'medium'}}</td>
                             <td><span ng-if="item.oldStatus">{{item.oldStatus}} &rarr; </span>{{item.newStatus}}</td>
                             <td>
-                                <a ng-if="item.userId >= 10" ui-sref="user-edit({id: item.userId})">{{item.userFullName}}</a>
-                                <span ng-if="item.userId < 10">{{item.userFullName}}</span>
+                                <a ng-if="item.createdById >= 10" ui-sref="user-edit({id: item.createdById})">{{item.createdByFullName}}</a>
+                                <span ng-if="item.createdById < 10">{{item.createdByFullName}}</span>
                             </td>
                             <td>{{item.note}}</td>
                         </tr>

@@ -23,12 +23,12 @@
 
         vm.addItem = function addItem() {
             vm.widgetInstance.items.push({});
-        }
+        };
 
         vm.removeItem = function removeItem(item) {
             var index = vm.widgetInstance.items.indexOf(item);
             vm.widgetInstance.items.splice(index, 1);
-        }
+        };
 
         vm.save = function save() {
             var promise;
@@ -36,6 +36,8 @@
             // ng-upload will post null as text
             angular.forEach(vm.widgetInstance.items, function (item) {
                 item.caption = item.caption === null ? '' : item.caption;
+                item.subCaption = item.subCaption === null ? '' : item.subCaption;
+                item.linkText = item.linkText === null ? '' : item.linkText;
             });
 
             if (vm.isEditMode) {

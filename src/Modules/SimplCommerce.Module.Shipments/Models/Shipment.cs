@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using SimplCommerce.Infrastructure.Models;
 using SimplCommerce.Module.Core.Models;
 using SimplCommerce.Module.Inventory.Models;
@@ -12,16 +13,19 @@ namespace SimplCommerce.Module.Shipments.Models
         public Shipment()
         {
             CreatedOn = DateTimeOffset.Now;
-            UpdatedOn = DateTimeOffset.Now;
+            LatestUpdatedOn = DateTimeOffset.Now;
         }
 
         public long OrderId { get; set; }
 
         public Order Order { get; set; }
 
+        [StringLength(450)]
         public string TrackingNumber { get; set; }
 
         public long WarehouseId { get; set; }
+
+        public long? VendorId { get; set; }
 
         public Warehouse Warehouse { get; set; }
 
@@ -31,7 +35,7 @@ namespace SimplCommerce.Module.Shipments.Models
 
         public DateTimeOffset CreatedOn { get; set; }
 
-        public DateTimeOffset UpdatedOn { get; set; }
+        public DateTimeOffset LatestUpdatedOn { get; set; }
 
         public IList<ShipmentItem> Items { get; set; } = new List<ShipmentItem>();
     }

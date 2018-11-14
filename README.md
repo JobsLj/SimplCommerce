@@ -9,19 +9,21 @@
 |Travis       | Linux / MacOS  |[![Build Status](https://travis-ci.org/simplcommerce/SimplCommerce.svg?branch=master)](https://travis-ci.org/simplcommerce/SimplCommerce) |
 
 ## Online demo (Azure Website)
-http://demo.simplcommerce.com
+- Store front: http://demo.simplcommerce.com
+- Administration: http://demo.simplcommerce.com/admin Email: admin@simplcommerce.com Password: 1qazZAQ!
 
 ## Docker
-- First run the database: `docker run --name simpldb -d postgres`
-- Then run the app: `docker run --name simplsite -d -p 5000:80 --link simpldb:simpldb simplcommerce/nightly-build`
 
+For testing purpose only `docker run -p 5000:80 simplcommerce/ci-build`
+
+Continuous deployment: https://ci.simplcommerce.com
 
 ## Visual Studio 2017 and SQL Server
 
 #### Prerequisites
 
 - SQL Server
-- [Visual Studio 2017 version 15.7 with .NET Core SDK 2.1](https://www.microsoft.com/net/download/all)
+- [Visual Studio 2017 version >= 15.8 with .NET Core SDK 2.1.402](https://www.microsoft.com/net/download/all)
 
 #### Steps to run
 
@@ -36,23 +38,22 @@ http://demo.simplcommerce.com
 #### Prerequisite
 
 - PostgreSQL
-- NodeJS
-- [.NET Core SDK 2.1](https://www.microsoft.com/net/download/all)
+- [.NET Core SDK 2.1.402](https://www.microsoft.com/net/download/all)
 
 #### Steps to run
 
 - Update the connection string in appsettings.json in SimplCommerce.WebHost.
-- Run file "sudo ./simpl-build.sh".
+- Run file simpl-build.sh by "sudo ./simpl-build.sh". For ubuntu 18 "sudo bash simpl-build.sh"
 - In the terminal, navigate to the "src/SimplCommerce.WebHost" type "dotnet run" and hit "Enter".
 - Open browser, open http://localhost:5000. The back-office can access via /Admin using the pre-created account: admin@simplcommerce.com, 1qazZAQ!
 
 ## Technologies and frameworks used:
+
 - ASP.NET MVC Core 2.1
 - Entity Framework Core 2.1
 - ASP.NET Identity Core 2.1
-- Autofac 4.2.0
 - Angular 1.6.3
-- MediatR 3.0.1 for domain event
+- MediatR 5.0.1 for domain event
 
 ## Docs
 
@@ -64,8 +65,33 @@ https://github.com/simplcommerce/SimplCommerce/wiki/Roadmap
 
 ## How to contribute
 
+- Star this project on GitHub.
 - Report bugs or suggest features by create new issues or add comments to issues
 - Submit pull requests
+- Spread the word by blogging about SimplCommerce or sharing it on social networks
+- Donate us
+
+## Contributors
+
+This project exists thanks to all the people who contribute.
+
+<a href="https://github.com/simplcommerce/SimplCommerce/graphs/contributors"><img src="https://opencollective.com/simplcommerce/contributors.svg?width=890" title="contributors" alt="contributors" /></a>
+
+## Backers
+
+Love our work and help us continue our activities? [[Become a backer](https://opencollective.com/simplcommerce#backer)]
+
+<a href="https://opencollective.com/simplcommerce#backers" target="_blank"><img src="https://opencollective.com/simplcommerce/backers.svg?width=890"></a>
+
+## Sponsors
+
+Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/simplcommerce#sponsor)]
+
+<a href="https://opencollective.com/simplcommerce/sponsor/0/website" target="_blank"><img src="https://opencollective.com/simplcommerce/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/simplcommerce/sponsor/1/website" target="_blank"><img src="https://opencollective.com/simplcommerce/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/simplcommerce/sponsor/2/website" target="_blank"><img src="https://opencollective.com/simplcommerce/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/simplcommerce/sponsor/3/website" target="_blank"><img src="https://opencollective.com/simplcommerce/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/simplcommerce/sponsor/4/website" target="_blank"><img src="https://opencollective.com/simplcommerce/sponsor/4/avatar.svg"></a>
 
 ## License
 

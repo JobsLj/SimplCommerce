@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using SimplCommerce.Infrastructure.Models;
 
@@ -10,11 +11,13 @@ namespace SimplCommerce.Module.Core.Models
         public User()
         {
             CreatedOn = DateTimeOffset.Now;
-            UpdatedOn = DateTimeOffset.Now;
+            LatestUpdatedOn = DateTimeOffset.Now;
         }
 
         public Guid UserGuid { get; set; }
 
+        [Required]
+        [StringLength(450)]
         public string FullName { get; set; }
 
         public long? VendorId { get; set; }
@@ -23,7 +26,7 @@ namespace SimplCommerce.Module.Core.Models
 
         public DateTimeOffset CreatedOn { get; set; }
 
-        public DateTimeOffset UpdatedOn { get; set; }
+        public DateTimeOffset LatestUpdatedOn { get; set; }
 
         public IList<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
 
@@ -35,8 +38,12 @@ namespace SimplCommerce.Module.Core.Models
 
         public long? DefaultBillingAddressId { get; set; }
 
+        public string RefreshTokenHash { get; set; }
+
         public IList<UserRole> Roles { get; set; } =  new List<UserRole>();
 
         public IList<CustomerGroupUser> CustomerGroups { get; set; } = new List<CustomerGroupUser>();
+
+        public string Culture { get; set; }
     }
 }

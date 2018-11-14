@@ -19,6 +19,7 @@
         'simplAdmin.cms',
         'simplAdmin.search',
         'simplAdmin.reviews',
+        'simplAdmin.comments',
         'simplAdmin.activityLog',
         'simplAdmin.vendors',
         'simplAdmin.localization',
@@ -33,7 +34,8 @@
         'simplAdmin.paymentPaypalExpress',
         'simplAdmin.inventory',
         'simplAdmin.shipment',
-        'simplAdmin.paymentCoD'
+        'simplAdmin.paymentCoD',
+        'simplAdmin.recentlyViewed'
     ]);
 
     toastr.options.closeButton = true;
