@@ -70,6 +70,8 @@ namespace SimplCommerce.Module.Orders.Areas.Orders.Controllers
             }
 
             cart.ShippingData = JsonConvert.SerializeObject(deliveryInformationVm);
+            cart.OrderNote = deliveryInformationVm.OrderNote;
+            _cartRepository.SaveChanges();
             var orderCreateResult = await _orderService.CreateOrder(cart.Id, "CashOnDelivery", 0);
 
             if (!orderCreateResult.Success)
@@ -100,7 +102,8 @@ namespace SimplCommerce.Module.Orders.Areas.Orders.Controllers
                     ContactName = x.Address.ContactName,
                     Phone = x.Address.Phone,
                     AddressLine1 = x.Address.AddressLine1,
-                    AddressLine2 = x.Address.AddressLine1,
+                    CityName = x.Address.City,
+                    ZipCode = x.Address.ZipCode,
                     DistrictName = x.Address.District.Name,
                     StateOrProvinceName = x.Address.StateOrProvince.Name,
                     CountryName = x.Address.Country.Name,

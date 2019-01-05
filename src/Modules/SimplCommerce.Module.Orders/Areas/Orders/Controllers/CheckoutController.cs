@@ -18,8 +18,9 @@ using SimplCommerce.Module.ShoppingCart.Services;
 namespace SimplCommerce.Module.Orders.Areas.Orders.Controllers
 {
     [Area("Orders")]
-    [Authorize]
     [Route("checkout")]
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class CheckoutController : Controller
     {
         private readonly IOrderService _orderService;
@@ -67,7 +68,8 @@ namespace SimplCommerce.Module.Orders.Areas.Orders.Controllers
         {
             var currentUser = await _workContext.GetCurrentUser();
             // TODO Handle error messages
-            if (!ModelState.IsValid && (model.ShippingAddressId == 0))
+            if ((!model.NewAddressForm.IsValid() && model.ShippingAddressId == 0) ||
+                (!model.NewBillingAddressForm.IsValid() && !model.UseShippingAddressAsBillingAddress && model.BillingAddressId == 0))
             {
                 PopulateShippingForm(model, currentUser);
                 return View(model);
@@ -112,7 +114,8 @@ namespace SimplCommerce.Module.Orders.Areas.Orders.Controllers
                     ContactName = x.Address.ContactName,
                     Phone = x.Address.Phone,
                     AddressLine1 = x.Address.AddressLine1,
-                    AddressLine2 = x.Address.AddressLine1,
+                    CityName = x.Address.City,
+                    ZipCode = x.Address.ZipCode,
                     DistrictName = x.Address.District.Name,
                     StateOrProvinceName = x.Address.StateOrProvince.Name,
                     CountryName = x.Address.Country.Name,
@@ -122,6 +125,8 @@ namespace SimplCommerce.Module.Orders.Areas.Orders.Controllers
                 }).ToList();
 
             model.ShippingAddressId = currentUser.DefaultShippingAddressId ?? 0;
+
+            model.UseShippingAddressAsBillingAddress = true;
 
             model.NewAddressForm.ShipableContries = _countryRepository.Query()
                 .Where(x => x.IsShippingEnabled)

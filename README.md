@@ -3,10 +3,11 @@
 [![Join the chat at https://gitter.im/simplcommerce/SimplCommerce](https://badges.gitter.im/simplcommerce/SimplCommerce.svg)](https://gitter.im/simplcommerce/SimplCommerce?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Build Status
-| Build server| Platform       | Status      |
-|-------------|----------------|-------------|
-| AppVeyor    | Windows        |[![Build status](https://ci.appveyor.com/api/projects/status/cq61prgs6ta8e9hi/branch/master?svg=true)](https://ci.appveyor.com/project/thiennn/simplcommerce/branch/master) |
-|Travis       | Linux / MacOS  |[![Build Status](https://travis-ci.org/simplcommerce/SimplCommerce.svg?branch=master)](https://travis-ci.org/simplcommerce/SimplCommerce) |
+| Build server    | Platform       | Status      |
+|-----------------|----------------|-------------|
+| AppVeyor        | Windows        |[![Build status](https://ci.appveyor.com/api/projects/status/cq61prgs6ta8e9hi/branch/master?svg=true)](https://ci.appveyor.com/project/thiennn/simplcommerce/branch/master) |
+| Azure Pipelines | All            |[![Build Status](https://simplcommerce.visualstudio.com/simplcommerce/_apis/build/status/simplcommerce.SimplCommerce?branchName=master)](https://simplcommerce.visualstudio.com/simplcommerce/_build/latest?definitionId=1&branchName=master)
+|Travis           | Linux / MacOS  |[![Build Status](https://travis-ci.org/simplcommerce/SimplCommerce.svg?branch=master)](https://travis-ci.org/simplcommerce/SimplCommerce) |
 
 ## Online demo (Azure Website)
 - Store front: http://demo.simplcommerce.com
@@ -38,7 +39,7 @@ Continuous deployment: https://ci.simplcommerce.com
 #### Prerequisite
 
 - PostgreSQL
-- [.NET Core SDK 2.1.402](https://www.microsoft.com/net/download/all)
+- [.NET Core SDK 2.2.101](https://www.microsoft.com/net/download/all)
 
 #### Steps to run
 
@@ -49,11 +50,11 @@ Continuous deployment: https://ci.simplcommerce.com
 
 ## Technologies and frameworks used:
 
-- ASP.NET MVC Core 2.1
-- Entity Framework Core 2.1
-- ASP.NET Identity Core 2.1
+- ASP.NET MVC Core 2.2
+- Entity Framework Core 2.2
+- ASP.NET Identity Core 2.2
 - Angular 1.6.3
-- MediatR 5.0.1 for domain event
+- MediatR 6.0.0 for domain event
 
 ## Docs
 
